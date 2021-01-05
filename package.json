@@ -13,6 +13,7 @@
     "@types/node": "^14.14.20",
     "@vue/compiler-sfc": "^3.0.0-rc.1",
     "vite": "^1.0.0-rc.1",
+    "vue-class-component": "^7.2.6",
     "vue-property-decorator": "^9.1.2",
     "vue-template-compiler": "^2.6.12"
   }
