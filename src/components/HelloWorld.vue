@@ -15,6 +15,8 @@
     {{user.age}}
     <button @click.stop="addAge">show my address and add age:{{user.age}}</button>
 </div>
+<!-- 不知道为什么不触发touchmove，以后再看 -->
+<div @touchmove.stop="touchHandler">move me</div>
 </template>
 
 <script>
@@ -25,13 +27,14 @@ import {
     toRefs
 } from 'vue';
 import useCenter from '../compositionApi/useCenter';
+// import longtap from '../directive/longPress.js';
 function flagCenter() {
     // let flag = reactive({
     //     value: true
     // });
     let flag = ref(true); 
     function toggleFlag() {
-        console.log('flag: ',flag);
+        console.log('flag: ',flag); 
         flag.value = !flag.value;
     }
     return {
@@ -58,10 +61,14 @@ export default {
         function ckMe() {
             console.log('click me slot3');
         }
+        function touchHandler() {
+            console.log(666);
+        }
         return {
             state,
             toggle,
             ckMe,
+            touchHandler,
             flag,
             toggleFlag,
             user,
@@ -77,6 +84,6 @@ export default {
             openState: '数据2',
             closeState: '数据closeState',
         }
-    }
+    },
 }
 </script>

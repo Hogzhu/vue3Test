@@ -1,8 +1,55 @@
+// 移动端VUE点击、滑动和长按等事件处理（自定义指令） https://segmentfault.com/a/1190000013922322
+/**
+ * 处理 移动设备上的 点击、长按、左右上下滑动 事件
+ *
+ * =========================================
+ * 导出了7个自定义指令：
+ *  v-tap： tap点击事件
+ *  v-swipe： swipe滑动事件
+ *  v-swipeleft： swipeleft左滑事件
+ *  v-swiperight： swiperight右滑事件
+ *  v-swipedown： swipedown下滑
+ *  v-swipeup： swipeup上滑
+ *  v-longtap： longtap长按
+ * =========================================
+ *
+ * =========================================
+ * 包含四个参数
+ * stop 阻止冒泡
+ * prevent 阻止默认事件
+ * self 只当在 event.target 是当前元素自身时触发处理函数
+ * once 执行一次后解绑
+ *
+ * @example v-tap.stop.prevent.self.once
+ * =========================================
+ *
+ * =========================================
+ * 事件绑定有两种方式
+ * @example
+ *  1. v-tap="showDialog" 绑定一个方法对象
+ *  2. v-tap="{fn:click123, param1:1, param2:2, param3:{aaa:'123'} ...}"
+ *      绑定一个JSON字面量，fn是执行的方法，后边的是需要传递的参数
+ * 事件回调参数
+ * @param 第一个参数是event，事件对象
+ * @param 第二个参数是 binding.value，也就是v-tap=""双引号中的部分（如示例2，第二个参数就是 {fn:click123, param1:1, param2:2, param3:{aaa:'123'} ...}）
+ * =========================================
+ *
+ * @update
+ *  1. 根据MUI进行了滑动事件的判断修正
+ *  2. 根据TouchEvent修正了点击位置的判断
+ *
+ */
+
+import Vue from 'vue';
+
+/**
+ * vue上点击事件处理类
+ */
 class VueTouch {
   /**
-   * @param el 绑定的DOM
-   * @param binding 自定义指令中的binding对象
-   * @param type 绑定的事件类型
+   * @param el
+   * @param binding
+   * @param type
    */
   constructor(el, binding, type) {
     
@@ -14,20 +61,11 @@ class VueTouch {
     
     g.firstTouchPosition = {x: 0, y: 0};
     g.firstTouchTime = 0;
-    
-   /**
-     * =========================================
-     * 事件绑定有两种方式
-     * @example
-     *  1. v-tap="showDialog" 绑定一个方法对象
-     *  2. v-tap="{fn:click123, param1:1, param2:2, param3:{aaa:'123'} ...}"
-     *      绑定一个JSON字面量，fn是执行的方法，后边的是需要传递的参数
-     * 事件回调参数
-     * @param 第一个参数是event，事件对象
-     * @param 第二个参数是 binding.value，也就是v-tap=""双引号中的部分（如示例2，第二个参数就是 {fn:click123, param1:1, param2:2, param3:{aaa:'123'} ...}）
-     * =========================================
-     */   
     g.callBack = typeof(binding.value) === "object" ? binding.value.fn : binding.value;
+    
+    g.moved = false;
+    g.leaved = false;
+    g.longTouched = false;
     
     // 事件监听回调集合
     let _listener = Object.create(null);
@@ -35,10 +73,6 @@ class VueTouch {
     // 事件方法
     let _listen = (type) => {
       return function (e) {
-      
-        /**
-         * 取出修饰符（和v-on的一样）
-         */
         let {stop, prevent, self, once} = g.binding.modifiers;
         
         // 配置判断
@@ -55,27 +89,22 @@ class VueTouch {
     _listener.end = _listen('end');
     _listener.move = _listen('move');
     
-    // 事件绑定
     this.obj.addEventListener("touchstart", _listener.start, false);
     this.obj.addEventListener("touchend", _listener.end, false);
     this.obj.addEventListener("touchmove", _listener.move, false);
   }
   
-  // 点击开始
   start(e) {
     
     let g = this;
+  
+    // 初始化点击状态
+    g.moved = false;
+    g.leaved = false;
+    g.longTouched = false;
     
-    // @update 2018.3.26 这里做了一个修改
-    g.moved = false; //是否移动了
-    g.leaved = false; //是否离开了 
-    g.longTouched = false; //是否执行了长按操作
-    
-    // 获取开始点击位置和时间
     g.firstTouchPosition = g.getMultiCenter(e.changedTouches);
     g.firstTouchTime = e.timeStamp;
-    
-    // 判断长按操作 @TODO 稍微有点触发时机上的问题，待修正
     g.time = setTimeout(function () {
       if (!g.leaved && !g.moved) {
         g.touchType === "longtap" && g.callBack(e, g.binding.value);
@@ -84,12 +113,10 @@ class VueTouch {
     }.bind(g), 1000);
   }
   
-  // 点击结束
   end(e) {
     
     let g = this;
     
-    // 点击结束获取点击位置并计算位移和时差
     let {x, y} = g.getMultiCenter(e.changedTouches);
     let _disX = x - g.firstTouchPosition.x;
     let _disY = y - g.firstTouchPosition.y;
@@ -98,10 +125,8 @@ class VueTouch {
     
     clearTimeout(g.time);
     
-    // 计算滑动角度
     let _angle = this.getAngle(_disX, _disY);
     
-    // 判断滑动方向
     if (_dis > 18 && _timeDis < 300) {
       g.touchType === "swipe" && g.callBack(e, g.binding.value);
       if (_angle >= 60 && _angle <= 120)
@@ -110,7 +135,7 @@ class VueTouch {
         g.touchType === "swipeup" && g.callBack(e, g.binding.value);
       if (_angle <= 20 && _angle >= -20)
         g.touchType === "swipeleft" && g.callBack(e, g.binding.value);
-      if ((_angle <= -160 && _angle > -180) || (_angle >= 160 && _angle <= 180))
+      if ((_angle <= -160 && _angle >-180) || (_angle >= 160 && _angle <= 180))
         g.touchType === "swiperight" && g.callBack(e, g.binding.value);
     } else {
       if (!g.longTouched && !g.moved) {
@@ -146,12 +171,6 @@ class VueTouch {
     };
   };
   
-  /**
-   * 获取滑动的角度
-   * @param disX X轴的位移
-   * @param disY Y轴的位移
-   * @return 角度
-   */
   getAngle(disX, disY) {
     let g = this;
     
@@ -161,3 +180,42 @@ class VueTouch {
     return Math.atan2(disY, disX) * 180 / Math.PI;
   }
 }
+
+
+Vue.directive("tap", {
+  bind: function (el, binding) {
+    new VueTouch(el, binding, "tap");
+  }
+});
+Vue.directive("swipe", {
+  bind: function (el, binding) {
+    new VueTouch(el, binding, "swipe");
+  }
+});
+Vue.directive("swipeleft", {
+  bind: function (el, binding) {
+    new VueTouch(el, binding, "swipeleft");
+  }
+});
+Vue.directive("swiperight", {
+  bind: function (el, binding) {
+    new VueTouch(el, binding, "swiperight");
+  }
+});
+Vue.directive("swipedown", {
+  bind: function (el, binding) {
+    new VueTouch(el, binding, "swipedown");
+  }
+});
+Vue.directive("swipeup", {
+  bind: function (el, binding) {
+    new VueTouch(el, binding, "swipeup");
+  }
+});
+const longtap = Vue.directive("longtap", {
+  bind: function (el, binding) {
+    new VueTouch(el, binding, "longtap");
+  }
+});
+
+export { longtap }; 
