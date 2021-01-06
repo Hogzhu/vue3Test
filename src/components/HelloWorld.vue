@@ -48,7 +48,7 @@ export default defineComponent({
         msg: String
     },
     setup(props, context) {
-        let student = reactive({
+        let state = reactive({
             name: '张三',
             age: 24,
         })
