@@ -12,6 +12,9 @@
     <template #hello3="{ckMe}">
         <div @click="ckMe">plz clike me</div>
     </template>
+    <div class="a">
+        <div class="b">123</div>
+    </div>
 </HelloWorld>
 </template>
 
@@ -35,3 +38,5 @@ export default {
     }
 }
 </script>
+<style lang="less" scoped>
+</style>
