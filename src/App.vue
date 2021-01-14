@@ -16,21 +16,19 @@
         <div class="b">123</div>
     </div>
 </HelloWorld>
+<DirectiveTest></DirectiveTest>
 </template>
 
 <script lang="ts">
-import { Component } from 'vue-property-decorator';
-import HelloWorld from './components/HelloWorld.vue'
-// @Component({
-//     components: {
-//         HelloWorld
-//     }
-// })
-
-export default {
+import { Component, Vue, Prop } from 'vue-property-decorator';
+import HelloWorld from './components/HelloWorld.vue';
+import DirectiveTest from './components/DirectiveTest.vue';
+// @Component
+export default{
     name: 'App',
     components: {
-        HelloWorld
+        HelloWorld,
+        DirectiveTest
     },
     render() {},
     created() {

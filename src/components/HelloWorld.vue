@@ -42,14 +42,14 @@ function flagCenter() {
         toggleFlag
     }
 }
-export default {
-    name: 'HelloWorld',
+export default defineComponent({
+    name: 'HelloWorld', 
     props: {
         msg: String
     },
     setup(props, context) {
         let state = reactive({
-            name: 'testname',
+            name: '张三',
             age: 24,
         })
         const { flag, toggleFlag } = flagCenter();
@@ -85,5 +85,5 @@ export default {
             closeState: '数据closeState',
         }
     },
-}
+})
 </script>
