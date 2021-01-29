@@ -27,7 +27,7 @@ import {
     toRefs
 } from 'vue';
 import useCenter from '../compositionApi/useCenter';
-// import longtap from '../directive/longPress.js';
+// import longtap from '../directives/longPress.js';
 function flagCenter() {
     // let flag = reactive({
     //     value: true
